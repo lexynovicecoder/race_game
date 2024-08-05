@@ -23,7 +23,6 @@ WIDTH, HEIGHT = TRACK.get_width(), TRACK.get_height()
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Race Game")
 
-FPS = 70  # setting frame rate
 images = [(GRASS, (0, 0)), (TRACK, (0, 0)), (FINISH,(FINISH_POS)), (TRACK_BORDER, (0, 0))]
 
 
@@ -77,6 +76,12 @@ class AbstractCar:  # super class to be used by both player car and computer car
         self.y -= vertical
         self.x -= horizontal
 
+    def reset(self):
+        self.x, self.y = self.START_POS
+        self.angle = 0
+        self.vel = 0
+
+
 
 
 class PlayerCar(AbstractCar):
@@ -93,9 +98,32 @@ class PlayerCar(AbstractCar):
         self.vel = -self.vel# reverse velocity so if the car hits it moving forward it goes back and vice versa
         self.move()
 
+PATH = [(807, 293), (807, 293), (775, 215), (775, 215), (714, 154), (714, 154), (666, 113), (666, 113), (501, 53), (501, 53), (468, 48), (468, 48), (412, 55), (288, 65), (253, 73), (170, 99), (155, 125), (175, 182), (206, 210), (287, 239), (292, 270), (194, 312), (154, 324), (124, 365), (117, 428), (148, 450), (207, 467), (307, 488), (350, 496), (403, 506), (390, 545), (353, 591), (315, 632), (222, 709), (203, 736), (204, 787), (276, 884), (308, 890), (353, 878), (432, 831), (551, 848), (685, 836), (719, 805), (730, 723), (742, 690), (792, 674), (837, 597), (846, 540), (831, 471), (814, 427), (811, 405)]
 
 
-player_car = PlayerCar(4, 4)
+player_car = PlayerCar(8, 8)
+
+
+class ComputerCar(AbstractCar):
+    IMG = BLUE_CAR
+    START_POS = (773, 340)
+
+    def __init__(self, max_vel, rotation_vel, path=[]):
+        super().__init__(max_vel, rotation_vel) # inheriting the constructor and initializing the attributes needed
+        self.path = path
+        self.current_point = 0
+        self.vel = max_vel
+
+    def draw_points(self, win):
+        for point in self.path:
+            pygame.draw.circle(win, (255, 0, 0), point, 5)
+
+    def draw(self, win):
+        super().draw(win)
+        self.draw_points(win)
+
+
+computer_car = ComputerCar(4, 4, PATH)
 
 def move_player(player_car):
     moved = False
@@ -117,14 +145,17 @@ def move_player(player_car):
 
 
 
-def draw(win, images, player_car):
+def draw(win, images, player_car, computer_car):
     for img, pos in images:
         win.blit(img, pos)
     # function created to blit images on the screen
     player_car.draw(win)
+    computer_car.draw(win)
     pygame.display.update()  # this command is essential to ensure that anything u 'draw' in pygame is updated in the
     # display
 
+
+FPS = 70  # setting frame rate
 
 run = True
 clock = pygame.time.Clock()
@@ -133,12 +164,13 @@ clock = pygame.time.Clock()
 while run:
     clock.tick(FPS)  # this ensures that loop doesn't run more than 60 frames per second
 
-    draw(WIN, images, player_car)  # calling draw function
+    draw(WIN, images, player_car, computer_car)  # calling draw function
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
             break
+
     move_player(player_car)
 
 
@@ -149,7 +181,10 @@ while run:
     if finish_poi != None:
         if finish_poi[1] == 0:
             player_car.bounce()
+        else:
+            player_car.reset()
+            print("finish")
 
 
-
+print(computer_car.path)
 pygame.quit()
