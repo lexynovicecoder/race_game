@@ -81,6 +81,7 @@ class AbstractCar:  # super class to be used by both player car and computer car
         self.angle = 0
         self.vel = 0
 
+PATH = [(794, 323), (794, 323), (785, 273), (760, 236), (703, 176), (671, 150), (622, 117), (549, 92), (498, 80), (439, 78), (392, 79), (305, 92), (268, 94), (213, 108), (188, 124), (194, 151), (234, 182), (293, 207), (316, 223), (332, 254), (309, 304), (256, 321), (216, 328), (178, 354), (148, 385), (152, 420), (215, 445), (268, 453), (332, 460), (397, 476), (401, 524), (385, 570), (358, 606), (300, 653), (261, 697), (225, 745), (240, 799), (285, 849), (342, 845), (384, 823), (424, 794), (489, 798), (538, 817), (603, 837), (668, 823), (696, 782), (705, 721), (740, 679), (779, 646), (809, 593), (818, 540), (808, 485), (798, 405)]
 
 
 
@@ -97,8 +98,6 @@ class PlayerCar(AbstractCar):
     def bounce(self):
         self.vel = -self.vel# reverse velocity so if the car hits it moving forward it goes back and vice versa
         self.move()
-
-PATH = [(807, 293), (807, 293), (775, 215), (775, 215), (714, 154), (714, 154), (666, 113), (666, 113), (501, 53), (501, 53), (468, 48), (468, 48), (412, 55), (288, 65), (253, 73), (170, 99), (155, 125), (175, 182), (206, 210), (287, 239), (292, 270), (194, 312), (154, 324), (124, 365), (117, 428), (148, 450), (207, 467), (307, 488), (350, 496), (403, 506), (390, 545), (353, 591), (315, 632), (222, 709), (203, 736), (204, 787), (276, 884), (308, 890), (353, 878), (432, 831), (551, 848), (685, 836), (719, 805), (730, 723), (742, 690), (792, 674), (837, 597), (846, 540), (831, 471), (814, 427), (811, 405)]
 
 
 player_car = PlayerCar(8, 8)
@@ -122,8 +121,43 @@ class ComputerCar(AbstractCar):
         super().draw(win)
         self.draw_points(win)
 
+    def calculate_angle(self):
+        target_x, target_y = self.path[self.current_point]
+        x_diff = target_x - self.x
+        y_diff = target_y - self.y
+        if y_diff == 0:
+            desired_radian_angle = math.pi / 2  # this is done so that a zero division error won't be
+            # raised when the difference returns zero and sets the angle to 90 degrees
+        else:
+            desired_radian_angle = math.atan(x_diff / y_diff)
+        if target_y > self.y:
+            desired_radian_angle += math.pi
 
-computer_car = ComputerCar(4, 4, PATH)
+        difference_in_angle = self.angle - math.degrees(desired_radian_angle)
+        if difference_in_angle >= 180:
+            difference_in_angle -= 360
+
+        if difference_in_angle > 0:
+            self.angle -= min(self.rotation_vel, abs(difference_in_angle))
+        else:
+            self.angle += min(self.rotation_vel, abs(difference_in_angle))
+
+    def update_path_point(self):
+        target = self.path[self.current_point]
+        rect = pygame.Rect(self.x, self.y, self.img.get_width(), self.img.get_height())
+        if rect.collidepoint(
+                *target):  # the asterisk passes the x and y coordinates as two different arguments to the function
+            self.current_point += 1
+
+    def move(self):
+        if self.current_point >= len(self.path):
+            return
+        self.calculate_angle()
+        self.update_path_point()
+        super().move()
+
+
+computer_car = ComputerCar(3, 3,  PATH)
 
 def move_player(player_car):
     moved = False
@@ -171,8 +205,7 @@ while run:
             run = False
             break
 
-    move_player(player_car)
-
+    computer_car.move()
 
     if player_car.collide(TRACK_BORDER_MASK) != None:
         player_car.bounce()
@@ -186,5 +219,5 @@ while run:
             print("finish")
 
 
-print(computer_car.path)
+
 pygame.quit()
