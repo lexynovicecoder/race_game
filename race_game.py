@@ -4,17 +4,17 @@ import math
 from functions import *
 
 GRASS = scale_image(pygame.image.load("grass.jpg"), 2.5)
-TRACK = scale_image(pygame.image.load("track2.png"), 0.8)
+TRACK = scale_image(pygame.image.load("newtrack.png"), 2)
 
 FINISH = pygame.image.load("finish.png")
-FINISH_POS = (732.5, 395)
+FINISH_POS = (805, 500)
 FINISH_MASK = pygame.mask.from_surface(FINISH)
-TRACK_BORDER = scale_image(pygame.image.load("track2border.png"), 0.8)
+TRACK_BORDER = scale_image(pygame.image.load("newtrackborder.png"), 2)
 
 TRACK_BORDER_MASK = pygame.mask.from_surface(TRACK_BORDER)
 # getting the mask of the track border to help in detecting pixel perfect collision
 
-RED_CAR = scale_image(pygame.image.load("redcar.png"), 0.17)
+RED_CAR = scale_image(pygame.image.load("redcar.png"), 0.15)
 BLUE_CAR = scale_image(pygame.image.load('bluecar.png'), 0.17)
 
 WIDTH, HEIGHT = TRACK.get_width(), TRACK.get_height()
@@ -81,13 +81,13 @@ class AbstractCar:  # super class to be used by both player car and computer car
         self.angle = 0
         self.vel = 0
 
-PATH = [(794, 323), (794, 323), (785, 273), (760, 236), (703, 176), (671, 150), (622, 117), (549, 92), (498, 80), (439, 78), (392, 79), (305, 92), (268, 94), (213, 108), (188, 124), (194, 151), (234, 182), (293, 207), (316, 223), (332, 254), (309, 304), (256, 321), (216, 328), (178, 354), (148, 385), (152, 420), (215, 445), (268, 453), (332, 460), (397, 476), (401, 524), (385, 570), (358, 606), (300, 653), (261, 697), (225, 745), (240, 799), (285, 849), (342, 845), (384, 823), (424, 794), (489, 798), (538, 817), (603, 837), (668, 823), (696, 782), (705, 721), (740, 679), (779, 646), (809, 593), (818, 540), (808, 485), (798, 405)]
+PATH = [(872, 333), (845, 247), (770, 209), (607, 195), (505, 125), (404, 191), (205, 209), (132, 289), (199, 367), (507, 365), (607, 413), (602, 506), (471, 538), (297, 537), (180, 548), (135, 628), (193, 696), (357, 701), (724, 695), (840, 662), (858, 514)]
 
 
 
 class PlayerCar(AbstractCar):
     IMG = RED_CAR
-    START_POS = (732.5, 340)
+    START_POS = (825, 440)
 
     def reduce_speed(self):
         self.vel = max(self.vel - self.acceleration, 0)
@@ -105,7 +105,7 @@ player_car = PlayerCar(8, 8)
 
 class ComputerCar(AbstractCar):
     IMG = BLUE_CAR
-    START_POS = (773, 340)
+    START_POS = (853, 440)
 
     def __init__(self, max_vel, rotation_vel, path=[]):
         super().__init__(max_vel, rotation_vel) # inheriting the constructor and initializing the attributes needed
@@ -157,7 +157,8 @@ class ComputerCar(AbstractCar):
         super().move()
 
 
-computer_car = ComputerCar(3, 3,  PATH)
+computer_car = ComputerCar(3, 4.5, PATH)
+
 
 def move_player(player_car):
     moved = False
@@ -204,9 +205,8 @@ while run:
         if event.type == pygame.QUIT:
             run = False
             break
-
     computer_car.move()
-
+    move_player(player_car)
     if player_car.collide(TRACK_BORDER_MASK) != None:
         player_car.bounce()
 
@@ -219,5 +219,5 @@ while run:
             print("finish")
 
 
-
+print(computer_car.path)
 pygame.quit()
