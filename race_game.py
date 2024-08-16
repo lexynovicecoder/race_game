@@ -2,6 +2,7 @@ import pygame
 import time
 import math
 from functions import *
+pygame.font.init()
 
 GRASS = scale_image(pygame.image.load("grass.jpg"), 2.5)
 TRACK = scale_image(pygame.image.load("newtrack.png"), 2)
@@ -13,6 +14,8 @@ TRACK_BORDER = scale_image(pygame.image.load("newtrackborder.png"), 2)
 
 TRACK_BORDER_MASK = pygame.mask.from_surface(TRACK_BORDER)
 # getting the mask of the track border to help in detecting pixel perfect collision
+
+MAIN_FONT = pygame.font.SysFont("comicsans", 44)
 
 RED_CAR = scale_image(pygame.image.load("redcar.png"), 0.15)
 BLUE_CAR = scale_image(pygame.image.load('bluecar.png'), 0.17)
@@ -27,7 +30,34 @@ images = [(GRASS, (0, 0)), (TRACK, (0, 0)), (FINISH,(FINISH_POS)), (TRACK_BORDER
 
 
 # making list that contains some images and their positions, so it can be used in the draw function
+class GameInfo:
+    LEVELS = 10
+    def __init__(self, level=1):
+        self.level = level
+        self.started = False # to determine if the level has started
+        self.level_start_time = 0
 
+    def next_level(self):
+        self.level += 1
+        self.started = False
+
+    def reset(self):
+        self.level = 1
+        self.started = False
+        self.level_start_time = 0
+
+    def game_finished(self):
+        return self.level > self.LEVELS # checking if the game is finished
+
+    def start_level(self):
+        self.started = True
+        self.level_start_time = time.time()
+
+    def get_level_time(self):
+        if not self.started():
+            return 0
+        else:
+            return self.level_start_time - time.time()
 
 class AbstractCar:  # super class to be used by both player car and computer car
     def __init__(self, max_vel, rotation_vel):  # vel meaning velocity
@@ -81,7 +111,7 @@ class AbstractCar:  # super class to be used by both player car and computer car
         self.angle = 0
         self.vel = 0
 
-PATH = [(872, 333), (845, 247), (770, 209), (607, 195), (505, 125), (404, 191), (205, 209), (132, 289), (199, 367), (507, 365), (607, 413), (602, 506), (471, 538), (297, 537), (180, 548), (135, 628), (193, 696), (357, 701), (724, 695), (840, 662), (858, 514)]
+PATH = [(872, 310), (845, 247), (770, 209), (607, 195), (505, 125), (404, 191), (205, 209), (132, 289), (199, 367), (507, 365), (607, 413), (602, 506), (471, 538), (297, 537), (180, 548), (135, 628), (193, 696), (357, 701), (724, 695), (840, 662), (858, 514)]
 
 
 
@@ -90,7 +120,7 @@ class PlayerCar(AbstractCar):
     START_POS = (825, 440)
 
     def reduce_speed(self):
-        self.vel = max(self.vel - self.acceleration, 0)
+        self.vel = max((self.vel - self.acceleration) / 2, 0)
         # this is so because if the velocity happens to become negative we don't want to move backwards hence it
          # automatically sets to zero
         self.move()
@@ -113,13 +143,10 @@ class ComputerCar(AbstractCar):
         self.current_point = 0
         self.vel = max_vel
 
-    def draw_points(self, win):
-        for point in self.path:
-            pygame.draw.circle(win, (255, 0, 0), point, 5)
 
     def draw(self, win):
         super().draw(win)
-        self.draw_points(win)
+
 
     def calculate_angle(self):
         target_x, target_y = self.path[self.current_point]
@@ -195,29 +222,48 @@ FPS = 70  # setting frame rate
 run = True
 clock = pygame.time.Clock()
 # trying to set the speed of the game so that the speed would be similar on anyone's computer
+game_info = GameInfo()
 
 while run:
     clock.tick(FPS)  # this ensures that loop doesn't run more than 60 frames per second
 
     draw(WIN, images, player_car, computer_car)  # calling draw function
+    pygame.display.update()
+
+    while not game_info.started:
+        blit_text_center(WIN, MAIN_FONT, f"Press any key to start level {game_info.level}!")
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                break
+            if event.type == pygame.KEYDOWN:
+                game_info.start_level()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
             break
+
     computer_car.move()
     move_player(player_car)
     if player_car.collide(TRACK_BORDER_MASK) != None:
         player_car.bounce()
 
-    finish_poi = player_car.collide(FINISH_MASK, *FINISH_POS)
-    if finish_poi != None:
-        if finish_poi[1] == 0:
+    computer_finish_poi = computer_car.collide(FINISH_MASK, *FINISH_POS)
+    if computer_finish_poi is not None:
+        player_car.reset()
+        computer_car.reset()
+
+
+    player_finish_poi = player_car.collide(FINISH_MASK, *FINISH_POS)
+    if player_finish_poi is not None:
+        if player_finish_poi[1] == 0:
             player_car.bounce()
         else:
             player_car.reset()
-            print("finish")
+            computer_car.reset()
 
 
-print(computer_car.path)
+
+
 pygame.quit()
