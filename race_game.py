@@ -54,7 +54,7 @@ class GameInfo:
         self.level_start_time = time.time()
 
     def get_level_time(self):
-        if not self.started():
+        if not self.started:
             return 0
         else:
             return self.level_start_time - time.time()
@@ -89,8 +89,8 @@ class AbstractCar:  # super class to be used by both player car and computer car
 
     def move_backward(self):
         self.vel = max(self.vel - self.acceleration, -self.max_vel/2)
-        # we are halfing the negative velocity because when reversing a car you can't go as fast as when moving forward
         self.move()
+        # we are halfing the negative velocity because when reversing a car you can't go as fast as when moving forward
 
     def collide(self, mask, x = 0, y = 0):
        car_mask = pygame.mask.from_surface(self.img)
@@ -207,10 +207,20 @@ def move_player(player_car):
 
 
 
-def draw(win, images, player_car, computer_car):
+def draw(win, images, player_car, computer_car, game_info):
     for img, pos in images:
         win.blit(img, pos)
     # function created to blit images on the screen
+    level_text = MAIN_FONT.render(f"Level {game_info.level}", 1, (255, 255, 255))
+    win.blit(level_text, (10, HEIGHT - level_text.get_height() - 70))
+
+    time_text = MAIN_FONT.render(f"Time: {game_info.get_level_time()}", 1, (255, 255, 255))
+    win.blit(time_text, (10, HEIGHT - time_text.get_height() - 40))
+
+
+    vel_text = MAIN_FONT.render(f"Vel: {player_car.vel}px/s", 1, (255, 255, 255))
+    win.blit(vel_text, (10, HEIGHT - vel_text.get_height() - 10))
+
     player_car.draw(win)
     computer_car.draw(win)
     pygame.display.update()  # this command is essential to ensure that anything u 'draw' in pygame is updated in the
@@ -227,11 +237,12 @@ game_info = GameInfo()
 while run:
     clock.tick(FPS)  # this ensures that loop doesn't run more than 60 frames per second
 
-    draw(WIN, images, player_car, computer_car)  # calling draw function
+    draw(WIN, images, player_car, computer_car, game_info)  # calling draw function
     pygame.display.update()
 
     while not game_info.started:
         blit_text_center(WIN, MAIN_FONT, f"Press any key to start level {game_info.level}!")
+        pygame.display.update()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
